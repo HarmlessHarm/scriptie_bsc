@@ -1,0 +1,59 @@
+[
+	{
+		"dir": "HER2",
+		"year": "2016",
+		"quality": "good"
+	},
+	{
+		"dir": "HES1",
+		"year": "2016",
+		"quality": "good"
+	},
+	{
+		"dir": "DEMI_LIPIDTOX",
+		"year": "2017",
+		"quality": "good"
+	},
+	{
+		"dir": "GAPDH",
+		"year": "2017",
+		"quality": "bad",
+		"note": "too many"
+	},
+	{
+		"dir": "PPARG",
+		"year": "2017",
+		"quality": "bad"
+	},
+	{
+		"dir": "SQLE",
+		"year": "2017",
+		"quality": "bad"
+	},
+	{
+		"dir": "CALIBRATION",
+		"year": "2018",
+		"quality": "good"
+	},
+	{
+		"dir": "MIGUEL",
+		"year": "2018",
+		"quality": "good"
+	},
+	{
+		"dir": "MICHAL_DRB TIMECOURSES",
+		"year": "2018",
+		"quality": "good"
+	},
+	{
+		"dir": "SQLE",
+		"year": "2018",
+		"quality": "bad"
+	},
+	{
+		"dir": "XBP1",
+		"year": "2018",
+		"quality": "bad",
+		"note": "overlap"
+	},
+]
