@@ -37,8 +37,6 @@ def write_blobs(file_path, data, i):
 		blob_writer = csv.writer(f, delimiter=',')
 		for blob in data:
 			blob_writer.writerow(blob)
-		
-
 
 file_path = data_dir+files[1]['name']
 image_generator = get_image(files[1])

@@ -35,7 +35,7 @@ class IndexTracker(object):
 fig, ax = plt.subplots(1, 1)
 
 X = np.random.rand(20, 20, 40)
-with ND2Reader('test_file.nd2') as images:
+with ND2Reader('../data/test_file.nd2') as images:
     images.bundle_axes = 'czyx'
     X = images[0][1].T
 

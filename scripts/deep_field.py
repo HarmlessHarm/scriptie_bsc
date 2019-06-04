@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 layer = 10
-with ND2Reader('test_file.nd2') as images:
+with ND2Reader('../data/test_file.nd2') as images:
 	images.bundle_axes = 'czyx'
 	frames = images[0][1]
 	image = frames[layer]
@@ -25,15 +25,15 @@ image_gray = rgb2gray(image)
 import time
 s = time.time()
 
-blobs_log = blob_log(image_gray, max_sigma=30, num_sigma=10, threshold=.1)
+blobs_log = blob_log(image_gray, max_sigma=5, num_sigma=10, threshold=.1)
 
 # Compute radii in the 3rd column.
 blobs_log[:, 2] = blobs_log[:, 2] * sqrt(2)
 
-blobs_dog = blob_dog(image_gray, max_sigma=30, threshold=.1)
+blobs_dog = blob_dog(image_gray, max_sigma=5, threshold=.1)
 blobs_dog[:, 2] = blobs_dog[:, 2] * sqrt(2)
 
-blobs_doh = blob_doh(image_gray, max_sigma=30, threshold=.01)
+blobs_doh = blob_doh(image_gray, max_sigma=5, threshold=.01)
 
 blobs_list = [blobs_log, blobs_dog, blobs_doh]
 colors = ['yellow', 'lime', 'red']

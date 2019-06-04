@@ -50,7 +50,7 @@ class SlicerViewer(object):
 
 		self.im.axes.figure.canvas.draw()
 
-with ND2Reader('data/test_file.nd2') as images:
+with ND2Reader('../data/test_file.nd2') as images:
 	images.bundle_axes = 'czyx'
 	frames = images[0][1]
 

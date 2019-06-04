@@ -6,7 +6,7 @@ import numpy as np
 from skimage.transform import resize
 
 
-def read_images(file='test_file.nd2'):
+def read_images(file='../data/test_file.nd2'):
 	with ND2Reader(file) as images:
 		images.bundle_axes = 'czyx'
 		# store all z slices from channel 1 in frames
