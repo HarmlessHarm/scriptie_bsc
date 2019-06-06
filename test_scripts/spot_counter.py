@@ -82,6 +82,16 @@ print("Summed time: {}s, blob count: {}".format(round(time.time() - s, 2), sum_b
 s = time.time()
 
 blobs_log_3D = blob_log(norm_frames, max_sigma=5, num_sigma=10, threshold=.1)
+blobs_log_3D[:,3] = blobs_log_3D[:,3] * sqrt(3)
+
+blob_list_3D = [list()] * int(max(blobs_log_3D[:,0]))
+for blob in blobs_log_3D:
+	slice_index = int(blob[0]) - 1
+	# if blob_list_3D[slice_index] == 0:
+	# 	blob_list_3D[slice_index] = np.empty()
+	blob_list_3D[slice_index].append(blob[1:])
+
+print(blob_list_3D)
 
 print("3D time: {}s, blob count: {}".format(round(time.time() - s, 2), blobs_log_3D.shape[0]))
 
