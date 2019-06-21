@@ -433,7 +433,7 @@ def blob_log(image, min_sigma=1, max_sigma=50, num_sigma=10, thresholds=[.2],
                  for s in np.mean(sigma_list, axis=1)]
 
     image_cube = np.stack(gl_images, axis=-1)
-    print("LoG filter took {}s".format(round(time.time() - start, 2)))
+    # print("LoG filter took {}s".format(round(time.time() - start, 2)))
     ret = list()
     times = list()
     for threshold in thresholds:
@@ -464,7 +464,7 @@ def blob_log(image, min_sigma=1, max_sigma=50, num_sigma=10, thresholds=[.2],
 
         ret.append(_prune_blobs(lm, overlap))
         times.append(time.time() - start)
-    print("Thresholds took on avg: {}s".format(round(np.average(np.array(times)),2)))
+    # print("Thresholds took on avg: {}s".format(round(np.average(np.array(times)),2)))
     return np.asarray(ret)
 
 

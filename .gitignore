@@ -107,6 +107,10 @@ venv.bak/
 # DATA
 /data/
 /papers/
+/test_scripts/
+
+# dumps
+/*/dump*.csv
 
 #sublime project
 *.sublime-project
