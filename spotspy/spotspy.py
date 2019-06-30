@@ -14,19 +14,9 @@ import time
 import csv
 import multiprocessing as mp
 import sys
-
-FILES = [
-	{'dir':'2018/MICHAL_DRB TIMECOURSES', 'name':'2018_5_3_AREG_DRBexp_8 0_each001.nd2', 'c': 1},
-	{'dir':'2018/MICHAL_DRB TIMECOURSES', 'name':'2018_6_8_DRB24hr_2hrrelease_areg_324each.nd2', 'c': 1},
-	{'dir':'2018/MICHAL_DRB TIMECOURSES', 'name':'2018_5_2_PGK1_DRBexp_80_each.nd2', 'c': 1},
-
-]
+import pickle
 
 DATA_DIR = '/media/harm/1TB/'
-
-STORE_KER_9 = list()
-STORE_KER_11 = list()
-STORE_KER_13 = list()
 
 def get_label_data():
 	file = '../data/filenames_DF_labeled.csv'
@@ -43,7 +33,6 @@ def get_image(file_path, channel, indices):
 
 		for i, fov in enumerate(images):
 			if i in indices:
-				print("yield image {}".format(i))
 				yield i, fov
 
 def normalize_image(image):
@@ -84,52 +73,49 @@ def write_blobs(file_path, data, i):
 		for blob in data:
 			blob_writer.writerow(blob)
 
+def generate_plot(x, y, y2, t):
+	# Plots: Create fig for each param setting and image
+	fig, ax1 = plt.subplots()
+	fig.suptitle('dt:{}'.format(t))
+	ax1.plot(x, y, c='b')
+	ax1.scatter(x, [0]*len(x), c='black')
+	ax1.set_ylabel('blobs', color='b')
+	ax1.tick_params('y', colors='b')
+
+	ax3 = ax1.twinx()
+	ax3.set_ylabel('avg deriv.', color='y')
+	ax3.tick_params('y', colors='y')
+
+	ax3.plot(x, y2, c='y')
+	ax1.plot(x[t], y[t], 'yo')
+
+	plt.show()
+
+def generate_display():
+	pass
 
 def analyse_image(inpt):
-	global img_count, tot_img
-
-	idx, image, ms, s, ns, t, k, plot = inpt
+	idx, image, ms, s, ns, t, ks, plot = inpt
 
 	start = time.time()
 	
 	norm_image = normalize_image(image)
 	
-	# params = {'dt': [25], 'kers' : [3,5,7]}
-	
-	x = np.linspace(0.05, 0.55, t)
+	x	= np.linspace(0.05, 0.55, t)
 	log_blobs = blob_log_3D(norm_image, ms, s, ns, x)
 
 	y = [x.shape[0] for x in log_blobs]
 
-	c = ['y', 'r', 'g']
-	# if plot:
-	# 	# Plots: Create fig for each param setting and image
-	# 	fig, ax1 = plt.subplots()
-	# 	fig.suptitle('dt:{}'.format(t))
-	# 	ax1.plot(x, y, c='b')
-	# 	ax1.scatter(x, [0]*len(x), c='black')
-	# 	ax1.set_ylabel('blobs', color='b')
-	# 	ax1.tick_params('y', colors='b')
+	analysis = list()
+	for k in ks:
+		blob_count = find_plateau(k, y, False)
+		analysis.append(blob_count)
+	
+	print("Image {} in {}s".format(idx, round(time.time() - start, 2)), end='\r')
+	# print('.', end='')
+	# img_count.value += 1
 
-	# 	ax3 = ax1.twinx()
-	# 	ax3.set_ylabel('avg deriv.', color='y')
-	# 	ax3.tick_params('y', colors='y')
-
-	# 	idx, val, y_plot = find_plateau(k, y, True)
-	# 	ax3.plot(x, y_plot, c='y')
-	# 	ax1.plot(x[idx], y[idx], 'yo')
-
-
-
-		# STORE_KER_9.append(find_plateau(9, y, False))
-		# STORE_KER_11.append(find_plateau(11, y, False))
-		# STORE_KER_13.append(find_plateau(13, y, False))
-
-	blob_count = find_plateau(k, y, False)
-	print("Image {}/{} in {}s".format(img_count.value + 1, tot_img, round(time.time() - start, 2)))
-	img_count.value += 1
-
-	return blob_count
+	return analysis
 
 def main(at_index):
 	labels = get_label_data()
@@ -157,40 +143,94 @@ def main(at_index):
 	end = round((time.time() - start)/60, 2)
 	print("Finished {} images in {}min".format(tot_img, end))
 
-def optimize_params(threads=4):
+def optimize_params(threads=6):
 	global tot_img, img_count
 	
 	labels = get_label_data()
 	params = (1, 2, 2, 25, 5)
+	ms = 1
+	ss = range(2,7,2)
+	nss = range(2,7,2)
+	ts = [20, 30, 40]
+	ks = range(2,15,2)
+
+	opt_start = time.time()
 
 	for i, file_data in labels.iterrows():
 		
+		if i in [27,36,46,48,53,56,58,62]:
+			continue
+
 		file_path = os.path.join(DATA_DIR, file_data.path, file_data.file_name)
 
 		# Select 50 random indices from data
-		nImages = 10
+		nImages = 50
 		img_count = mp.Value('i', 0)
 		tot_img = nImages
 		indices = np.random.choice(np.arange(0,file_data.v), size=nImages, replace=False)
 
-		img_gen = get_image(file_path, file_data.fish_channel, indices)
 
-		# Multiprocessing
-		start= time.time()
-		p = mp.Pool(threads)
-		test = p.map(analyse_image, [(*img, *params, 1) for i, img in enumerate(img_gen)])
-		p.close()
-		p.join()
-		
-		dump(test)
+		data_dict = dict()
+		data_dict['meta_data'] = file_data.to_dict()
+		data_dict['meta_data']['label_counts'] = np.array(list(map(int, map(float, data_dict['meta_data']['label_counts'].strip('[]').split(',')))))
+		data_dict['indices'] = indices
+		data_dict['analyzed_labels'] = data_dict['meta_data']['label_counts'][indices]
 
-		end = round((time.time() - start)/60, 2)
-		print("Finished {} images in {}min".format(tot_img, end))
+		data_dict['analyses'] = list()
+
+		print('Optimizing {}:{} for {} parameter combinations'.format(i, file_data.file_name, len(ts) * len(ss) * len(nss)))
+		combi = 1
+		for t in ts:
+			for s in ss:
+				for ns in nss:
+					params = (ms, s, ns, t, ks)
+					# print("Starting analysis {}".format(nImages))
+					start= time.time()
+					# print("Params: {},{},{},{}".format(*params[:-1]))
+					img_gen = get_image(file_path, file_data.fish_channel, indices)
+					# Multiprocessing
+					p = mp.Pool(threads)
+					analysis = p.map(analyse_image, [(idx, img[1], *params, 1) for idx, img in enumerate(img_gen)])
+					
+					arr = np.asarray(analysis)
+
+					p.close()
+					p.join()
+
+					end_sec = round(time.time() - start, 2)
+					end_min = round((time.time() - start) / 60, 2)
+
+					for i, col in enumerate(arr.T):
+						cnts = data_dict['analyzed_labels']
+						diff = abs(cnts - col)
+						diff2 = (cnts - col) ** 2
+						mean = np.mean(diff)
+						std = np.std(diff)
+						mean2 = np.mean(diff2)
+						std2 = np.std(diff2)
+						data_dict['analyses'] += [{
+							'params':(ms, s, ns, t, ks[i]), 
+							'counts': col, 
+							'mean':mean,
+							'std':std,
+							'sq_mean':mean2,
+							'sq_std':std2,
+							'time': end_sec
+						}]
+
+
+					print("{}: Finished with params: S:{}, nS:{}, nT:{} in {}min".format(combi, *params[1:-1], end_min))
+					combi += 1
+		dump(data_dict)
+		print("Finished data set {} in: {}s".format(file_data.file_name, round(time.time() - opt_start, 2)))
 
 def dump(data):
 
-	for ()
-	print(data)
+	file_name = data['meta_data']['file_name']
+	file_name = file_name[:-3] + 'pkl'
+	print(file_name)
+	with open('../data/pkls/' + file_name, 'wb') as dump_file:
+		pickle.dump(data, dump_file)
 
 def parse_args():
 	'''
@@ -218,12 +258,9 @@ def parse_args():
 											help="Number of threads", nargs=1, type=int)
 	
 	args = parser.parse_args()
-
-	print(args)
 	
 	if args.input[0] == "OPTIMIZE":
-		print("OPTIMIZE")
-		optimize_params()
+		optimize_params(4)
 	
 
 if __name__ == '__main__':
