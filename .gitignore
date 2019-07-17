@@ -107,6 +107,7 @@ venv.bak/
 # DATA
 /data/
 /papers/
+/plots/
 
 # dumps
 /*/dump*.csv
